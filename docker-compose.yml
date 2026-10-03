@@ -1,0 +1,66 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: capsula_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: capsula
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d capsula"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - database_data:/var/lib/postgresql/data
+
+  server:
+    build:
+      context: .
+      dockerfile: apps/server/Dockerfile
+    container_name: capsula_server
+    restart: unless-stopped
+    working_dir: /app
+    command: sh -c "pnpm install --filter server... && pnpm --filter server exec prisma db push && pnpm --filter server dev"
+    environment:
+      NODE_ENV: development
+      PORT: 3002
+      WEB_URL: http://localhost:3000
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/capsula?schema=public
+      DATABASE_DIRECT_URL: postgresql://postgres:postgres@postgres:5432/capsula?schema=public
+      SMTP_HOST: mailpit
+      SMTP_PORT: 1025
+      APP_TIMEZONE: America/Sao_Paulo
+      MAIL_FROM: "Cápsula do tempo <cartas@capsula.local>"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "3002:3002"
+    volumes:
+      - .:/app
+      - server_node_modules:/app/node_modules
+
+  mailpit:
+    image: axllent/mailpit
+    container_name: capsula_mailpit
+    restart: unless-stopped
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+
+  adminer:
+    image: adminer
+    container_name: capsula_adminer
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+
+volumes:
+  database_data:
+  server_node_modules:
