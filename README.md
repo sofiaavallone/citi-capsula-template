@@ -65,6 +65,14 @@ packages/
 AGENTS.md          contexto do projeto para o Codex
 ```
 
+## Deploy no Railway
+
+O monorepo vira três serviços no Railway: Postgres, `server` e `client`.
+
+- **server**: start `pnpm --filter server start` (cria as tabelas e sobe a API). Variáveis: `DATABASE_URL=${{Postgres.DATABASE_URL}}`, `WEB_URL=https://${{client.RAILWAY_PUBLIC_DOMAIN}}`, `APP_TIMEZONE`, `RESEND_API_KEY`, `MAIL_FROM`.
+- **client**: start `pnpm --filter client start`. Variável: `NEXT_PUBLIC_API_URL=https://${{server.RAILWAY_PUBLIC_DOMAIN}}` (lida no build, então faça redeploy se mudar).
+- O Railway bloqueia SMTP nos planos gratuitos; em produção use o Resend.
+
 ## Problemas comuns
 
 - **Porta ocupada no `docker:up`**: outro projeto está usando 5433, 3002, 8080 ou 8025. Pare o outro container (`docker ps`, `docker stop <id>`) e rode `docker compose up -d --force-recreate`.

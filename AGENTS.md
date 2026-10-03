@@ -24,6 +24,12 @@ que só podem ser abertas numa data escolhida. Monorepo pnpm + Turborepo, tudo e
   O `PrismaClient` usa o adapter `@prisma/adapter-pg` e existe uma instância única em `apps/server/src/lib/prisma.ts`.
 - E-mails em desenvolvimento vão para o Mailpit (variáveis `SMTP_*` já configuradas no `docker-compose.yml`).
 
+## Produção (Railway)
+
+- O server sobe com `pnpm --filter server start` (`prisma db push` + `tsx src/index.ts`); o client com `pnpm --filter client start`.
+- O Railway bloqueia SMTP nos planos gratuitos: em produção o e-mail sai pela API do Resend (pacote `resend`, variável `RESEND_API_KEY`).
+  Sem `RESEND_API_KEY`, o envio usa SMTP (Mailpit em desenvolvimento).
+
 ## Front-end
 
 - Use só a instância `api` de `apps/client/src/lib/api.ts` (não importe `axios` em outro lugar).
